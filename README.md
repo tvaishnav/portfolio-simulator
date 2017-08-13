@@ -1,6 +1,6 @@
 1) This application comes with maven wrapper. Hence it can be built and executed on machine without maven installed.
 
-2) Application be executed by the command:
+2) Application can be executed by the command:
 
    > mvnw spring-boot:run
 
