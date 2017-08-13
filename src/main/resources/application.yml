@@ -1,0 +1,13 @@
+config.personalcapital:
+  simulation-count: 10000
+  simulation-period-in-years: 20
+  initial-capital: 100000
+  inflation-rate-percent: 3.5
+  portfolios:
+    - portfolio-type: AGGRESSIVE
+      past-return-percent: 9.4324
+      past-risk-percent: 15.675
+    - portfolio-type: CONSERVATIVE
+      past-return-percent: 6.189
+      past-risk-percent: 6.3438
+      
