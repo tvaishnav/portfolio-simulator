@@ -1,8 +1,5 @@
 package com.personalcapital.portfoliosimulator;
 
-import static com.personalcapital.portfoliosimulator.service.PortfolioSimulatorService.getPercentile;
-import static com.personalcapital.portfoliosimulator.service.PortfolioSimulatorService.runSimulation;
-
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Random;
@@ -17,6 +14,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import com.personalcapital.portfoliosimulator.model.AppConfig;
 import com.personalcapital.portfoliosimulator.model.Portfolio;
 import com.personalcapital.portfoliosimulator.model.SimulationResult;
+import com.personalcapital.portfoliosimulator.service.PortfolioSimulatorService;
 
 /**
  * Class {@code PortfolioSimulatorApplication} serves an entry point to this command line application and is a consumer to {@code PortfolioSimulatorService} 
@@ -31,6 +29,9 @@ public class Application implements CommandLineRunner {
 
 	@Autowired
 	private AppConfig appConfig;
+	
+	@Autowired
+	private PortfolioSimulatorService portfolioSimulatorService;
 
 	@Override
 	public void run(final String... args) {
@@ -39,11 +40,17 @@ public class Application implements CommandLineRunner {
 		for (final Portfolio portfolio : appConfig.getPortfolios()) {
 			final BigDecimal[] simulationReturns = new BigDecimal[simulationCount];
 			for (int i = 0; i < simulationCount; i++) {
-				simulationReturns[i] = runSimulation(appConfig.getInitialCapital(), portfolio,
-						appConfig.getSimulationPeriodInYears(), appConfig.getInflationRate(), RAND);
+				simulationReturns[i] = portfolioSimulatorService.runSimulation(portfolio, RAND);
 			}
-			Arrays.parallelSort(simulationReturns);
-			final SimulationResult simulationResult = new SimulationResult(portfolio, getPercentile(simulationReturns, 50), getPercentile(simulationReturns, 90), getPercentile(simulationReturns, 10));
+			Arrays.parallelSort(simulationReturns);			
+
+			final SimulationResult unadjustedSimulationResult = new SimulationResult(portfolio, 
+					portfolioSimulatorService.getPercentile(simulationReturns, 50), 
+					portfolioSimulatorService.getPercentile(simulationReturns, 90), 
+					portfolioSimulatorService.getPercentile(simulationReturns, 10));
+			
+			final SimulationResult simulationResult = appConfig.isTobeAdjustedForInflation() ? portfolioSimulatorService.adjustForInflation(unadjustedSimulationResult) : unadjustedSimulationResult;
+
 			LOGGER.info("\n\n{}\n\n",simulationResult.toString());
 		}
 	}

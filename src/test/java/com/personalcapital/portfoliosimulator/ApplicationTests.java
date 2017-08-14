@@ -1,7 +1,5 @@
 package com.personalcapital.portfoliosimulator;
 
-import static com.personalcapital.portfoliosimulator.service.PortfolioSimulatorService.getPercentile;
-import static com.personalcapital.portfoliosimulator.service.PortfolioSimulatorService.runSimulation;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 
@@ -23,6 +21,7 @@ import com.personalcapital.portfoliosimulator.model.AppConfig;
 import com.personalcapital.portfoliosimulator.model.Portfolio;
 import com.personalcapital.portfoliosimulator.model.PortfolioType;
 import com.personalcapital.portfoliosimulator.model.SimulationResult;
+import com.personalcapital.portfoliosimulator.service.PortfolioSimulatorService;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = Application.class, initializers = ConfigFileApplicationContextInitializer.class)
@@ -33,6 +32,9 @@ public class ApplicationTests {
 	@Autowired
 	private AppConfig appConfig;
 		
+	@Autowired
+	private PortfolioSimulatorService portfolioSimulatorService;
+	
 	@Test
 	public void runSimulationTest() {
 		//setup expectations
@@ -40,9 +42,9 @@ public class ApplicationTests {
 		final Map<Portfolio, SimulationResult> expectedResult = new HashMap<>(appConfig.getPortfolios().size());
 		for (final Portfolio portfolio : appConfig.getPortfolios()) {
 			if (portfolio.getPortfolioType() == PortfolioType.AGGRESSIVE) {
-				expectedResult.put(portfolio, new SimulationResult(portfolio, BigDecimal.valueOf(405_176.96), BigDecimal.valueOf(405_176.96), BigDecimal.valueOf(405_176.96)));
+				expectedResult.put(portfolio, new SimulationResult(portfolio, BigDecimal.valueOf(405_176.97), BigDecimal.valueOf(405_176.97), BigDecimal.valueOf(405_176.97)));
 			} else {
-				expectedResult.put(portfolio, new SimulationResult(portfolio, BigDecimal.valueOf(188_156.58), BigDecimal.valueOf(188_156.58), BigDecimal.valueOf(188_156.58)));
+				expectedResult.put(portfolio, new SimulationResult(portfolio, BigDecimal.valueOf(188_156.54), BigDecimal.valueOf(188_156.54), BigDecimal.valueOf(188_156.54)));
 			}
 		}
 		//test
@@ -51,11 +53,16 @@ public class ApplicationTests {
 		for (final Portfolio portfolio : appConfig.getPortfolios()) {
 			final BigDecimal[] simulationReturns = new BigDecimal[simulationCount];
 			for (int i = 0; i < simulationCount; i++) {
-				simulationReturns[i] = runSimulation(appConfig.getInitialCapital(), portfolio,
-						appConfig.getSimulationPeriodInYears(), appConfig.getInflationRate(), randomInstance);
+				simulationReturns[i] = portfolioSimulatorService.runSimulation(portfolio, randomInstance);
 			}
-			Arrays.parallelSort(simulationReturns);
-			final SimulationResult simulationResult = new SimulationResult(portfolio, getPercentile(simulationReturns, 50), getPercentile(simulationReturns, 90), getPercentile(simulationReturns, 10));
+			Arrays.parallelSort(simulationReturns);			
+
+			final SimulationResult unadjustedSimulationResult = new SimulationResult(portfolio,
+					portfolioSimulatorService.getPercentile(simulationReturns, 50), 
+					portfolioSimulatorService.getPercentile(simulationReturns, 90), 
+					portfolioSimulatorService.getPercentile(simulationReturns, 10));
+			
+			final SimulationResult simulationResult = appConfig.isTobeAdjustedForInflation() ? portfolioSimulatorService.adjustForInflation(unadjustedSimulationResult) : unadjustedSimulationResult;
 			assertThat(simulationResult).isEqualTo(expectedResult.get(portfolio));
 		}
 	}

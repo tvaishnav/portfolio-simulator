@@ -22,6 +22,7 @@ public class AppConfig {
 	private int simulationPeriodInYears;
 	private BigDecimal initialCapital;
 	private BigDecimal inflationRatePercent;
+	private Boolean tobeAdjustedForInflation;
 	private List<Portfolio> portfolios;
 	
 	public int getSimulationCount() {
@@ -60,6 +61,14 @@ public class AppConfig {
 		this.inflationRatePercent = inflationRatePercent;
 	}
 	
+	public Boolean isTobeAdjustedForInflation() {
+		return tobeAdjustedForInflation;
+	}
+
+	public void setTobeAdjustedForInflation(final Boolean tobeAdjustedForInflation) {
+		this.tobeAdjustedForInflation = tobeAdjustedForInflation;
+	}
+
 	public List<Portfolio> getPortfolios() {
 		return portfolios;
 	}

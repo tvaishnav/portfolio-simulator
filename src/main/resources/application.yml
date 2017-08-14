@@ -3,6 +3,7 @@ config.personalcapital:
   simulation-period-in-years: 20
   initial-capital: 100000
   inflation-rate-percent: 3.5
+  tobe-adjusted-for-inflation: true
   portfolios:
     - portfolio-type: AGGRESSIVE
       past-return-percent: 9.4324
